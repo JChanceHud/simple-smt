@@ -40,14 +40,28 @@ class SparseTree {
     return this.tree[0][0]
   }
 
-  insertMany(elements) {
+  appendMany(elements) {
     this.tree[this.depth - 1].push(...elements)
     this.buildTree()
   }
 
-  insert(element) {
+  append(element) {
     this.tree[this.depth - 1].push(element)
     this.buildTree(this.tree[this.depth - 1].length - 1)
+  }
+
+  // Should be another instance of SparseTree instance
+  appendTree(subtree) {
+    // just add the leaves at the bottom level from the next empty child
+    const leafCount = Math.pow(2, subtree.depth - 1)
+    // the number of empty leaves to prepend
+    const emptyLeafCount = leafCount - (this.tree[this.depth - 1].length % leafCount)
+    const leavesToAppend = Array(emptyLeafCount === leafCount ? 0 : emptyLeafCount).fill().map(() => this.zeroTree[this.depth - 1])
+    leavesToAppend.push(...subtree.tree[subtree.depth - 1])
+    this.appendMany(leavesToAppend)
+    if (this.tree[this.depth - subtree.depth].slice(-1)[0] !== subtree.root()) {
+      throw new Error('Invalid subtree appended')
+    }
   }
 
   buildTree(fromIndex) {
@@ -94,7 +108,7 @@ class SparseTree {
         continue
       }
       const leftSibling = children[x]
-      const rightSibling = children.length <= x ? children[x+1] : this.zeroTree[depth]
+      const rightSibling = children.length <= (x + 1) ? this.zeroTree[depth] : children[x+1]
       parents.push(this.hashFn(leftSibling, rightSibling))
     }
     return parents
