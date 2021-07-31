@@ -14,11 +14,16 @@ console.log(tree.root())
 // }
 // return
 const start = +new Date()
+const roots = {}
 
 for (let x = 0; x < 100000; x++) {
   if (x !== 0 && x % 1000 === 0) {
     console.log(x)
     console.log(tree.root())
+    if (roots[tree.root()]) {
+      throw new Error('Duplicate root detected')
+    }
+    roots[tree.root()] = true
   }
   tree.insert('test')
 }

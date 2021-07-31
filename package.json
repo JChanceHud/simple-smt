@@ -1,7 +1,7 @@
 {
-  "name": "smt",
+  "name": "ssmt",
   "version": "0.0.0",
-  "description": "A sparse merkle tree implementation",
+  "description": "A simple sparse merkle tree implementation",
   "main": "index.js",
   "scripts": {
     "test": "node ./test"

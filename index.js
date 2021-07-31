@@ -32,7 +32,6 @@ class SparseTree {
     if (items) {
       this.tree[depth - 1].push(...items)
     }
-    console.log('building tree')
     // calculate the root
     this.buildTree()
   }
@@ -59,32 +58,22 @@ class SparseTree {
     if (fromIndex !== undefined) {
       // only rebuild a certain branch of the tree
       const startIndex = fromIndex % 2 === 0 ? fromIndex : fromIndex - 1
-      // console.log('start', startIndex)
-      // console.log('---')
       for (let depth = this.depth - 1; depth > 0; depth--) {
         const currentIndex = Math.floor(startIndex / Math.pow(2, (this.depth - 1) - depth))
-        // console.log('depth', depth)
-        // console.log('index', currentIndex)
         const leftSiblingIndex = currentIndex % 2 === 0 ? currentIndex : currentIndex - 1
         const leftSibling = this.tree[depth].length <= leftSiblingIndex ? this.zeroTree[depth] : this.tree[depth][leftSiblingIndex]
         const rightSibling = this.tree[depth].length <= leftSiblingIndex + 1 ? this.zeroTree[depth] : this.tree[depth][leftSiblingIndex + 1]
         if (leftSibling === this.zeroTree[depth] && rightSibling === this.zeroTree[depth]) {
           throw new Error('Recalculating stale subtree')
         }
-        // console.log(currentIndex)
         const parent = this.hashFn(leftSibling, rightSibling)
         const parentIndex = Math.floor(startIndex / Math.pow(2, (this.depth - 1) - (depth - 1)))
-        // console.log(currentIndex, parentIndex)
-        // console.log(currentIndex, parentIndex)
-        // console.log(depth - 1, parentIndex, parent)
         if (this.tree[depth - 1].length === parentIndex) {
           this.tree[depth - 1].push(parent)
         } else if (this.tree[depth - 1].length > parentIndex) {
           this.tree[depth - 1][parentIndex] = parent
-          // console.log('setting depth', depth - 1, parent)
         } else {
-          console.log(this.tree[depth-1].length, parentIndex)
-          throw new Error('incosi')
+          throw new Error('Non-append operation')
         }
       }
       return
