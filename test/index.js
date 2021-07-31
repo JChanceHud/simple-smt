@@ -1,33 +1,73 @@
+const test = require('ava')
+const assert = require('assert')
 const SparseTree = require('..')
 
-const tree = new SparseTree({ depth: 30 })
-console.log(tree.root())
-
-//   tree.insert('test')
-// console.log(tree.root())
-//   return
-// for (let x = 0; x < 10; x++) {
-//   console.log(x)
-//   console.log(tree.root())
-//   console.log(tree.tree)
-//   tree.insert('test')
-// }
-// return
-const start = +new Date()
-const roots = {}
-
-for (let x = 0; x < 100000; x++) {
-  if (x !== 0 && x % 1000 === 0) {
-    console.log(x)
-    console.log(tree.root())
-    if (roots[tree.root()]) {
-      throw new Error('Duplicate root detected')
+test('append speed', (t) => {
+  const tree = new SparseTree({ depth: 30 })
+  const start = +new Date()
+  const roots = {}
+  const count = 20000
+  for (let x = 0; x < count; x++) {
+    if (x !== 0 && x % 1000 === 0) {
+      if (roots[tree.root()]) {
+        throw new Error('Duplicate root detected')
+      }
+      roots[tree.root()] = true
     }
-    roots[tree.root()] = true
+    tree.append('test')
   }
-  tree.insert('test')
-}
+  const seconds = (+new Date() - start) / 1000
+  const recordsPerSecond = Math.floor(count / seconds)
+  console.log(`${recordsPerSecond} appends per second`)
+  t.pass()
+})
 
-const seconds = (+new Date() - start) / 1000
-const recordsPerSecond = Math.floor(100000 / seconds)
-console.log(`${recordsPerSecond} appends per second`)
+test('should merge subtree into larger tree', (t) => {
+  const subtree = new SparseTree({ depth: 5 })
+  for (let x = 0; x < 10; x++) {
+    subtree.append('test')
+  }
+  const tree = new SparseTree({ depth: 20 })
+  tree.appendTree(subtree)
+  const root = tree.tree[tree.depth - subtree.depth][0]
+  assert.equal(root, subtree.tree[0][0])
+  t.pass()
+})
+
+test('should merge subtree into larger, part filled tree', (t) => {
+  const subtree = new SparseTree({ depth: 5 })
+  for (let x = 0; x < 10; x++) {
+    subtree.append('test')
+  }
+  const tree = new SparseTree({ depth: 20 })
+  for (let x = 0; x < 500; x++) {
+    tree.append('test')
+  }
+  tree.appendTree(subtree)
+  const root = tree.tree[tree.depth - subtree.depth].slice(-1)[0]
+  assert.equal(root, subtree.root())
+  t.pass()
+})
+
+test('should throw if invalid subtree appended', (t) => {
+  const subtree = new SparseTree({ depth: 5 })
+  for (let x = 0; x < 10; x++) {
+    subtree.append('test')
+  }
+  const altsubtree = new SparseTree({ depth: 5 })
+  for (let x = 0; x < 10; x++) {
+    altsubtree.append('other test')
+  }
+  subtree.tree[0] = [...altsubtree.tree[0]]
+  subtree.tree[1] = [...altsubtree.tree[1]]
+  subtree.tree[2] = [...altsubtree.tree[2]]
+  const tree = new SparseTree({ depth: 20 })
+  try {
+    tree.appendTree(subtree)
+  } catch (err) {
+    assert.equal(err.toString(), 'Error: Invalid subtree appended')
+    t.pass()
+    return
+  }
+  assert(false)
+})
