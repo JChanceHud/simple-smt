@@ -41,22 +41,61 @@ class SparseTree {
     return this.tree[0][0]
   }
 
-  insert(element) {
-    this.tree[this.depth - 1].push(element)
+  insertMany(elements) {
+    this.tree[this.depth - 1].push(...elements)
     this.buildTree()
   }
 
-  buildTree() {
+  insert(element) {
+    this.tree[this.depth - 1].push(element)
+    this.buildTree(this.tree[this.depth - 1].length - 1)
+  }
+
+  buildTree(fromIndex) {
     if (this.tree[this.depth - 1].length === 0) {
       this.tree[0] = [this.zeroTree[0]]
       return
     }
+    if (fromIndex !== undefined) {
+      // only rebuild a certain branch of the tree
+      const startIndex = fromIndex % 2 === 0 ? fromIndex : fromIndex - 1
+      // console.log('start', startIndex)
+      // console.log('---')
+      for (let depth = this.depth - 1; depth > 0; depth--) {
+        const currentIndex = Math.floor(startIndex / Math.pow(2, (this.depth - 1) - depth))
+        // console.log('depth', depth)
+        // console.log('index', currentIndex)
+        const leftSiblingIndex = currentIndex % 2 === 0 ? currentIndex : currentIndex - 1
+        const leftSibling = this.tree[depth].length <= leftSiblingIndex ? this.zeroTree[depth] : this.tree[depth][leftSiblingIndex]
+        const rightSibling = this.tree[depth].length <= leftSiblingIndex + 1 ? this.zeroTree[depth] : this.tree[depth][leftSiblingIndex + 1]
+        if (leftSibling === this.zeroTree[depth] && rightSibling === this.zeroTree[depth]) {
+          throw new Error('Recalculating stale subtree')
+        }
+        // console.log(currentIndex)
+        const parent = this.hashFn(leftSibling, rightSibling)
+        const parentIndex = Math.floor(startIndex / Math.pow(2, (this.depth - 1) - (depth - 1)))
+        // console.log(currentIndex, parentIndex)
+        // console.log(currentIndex, parentIndex)
+        // console.log(depth - 1, parentIndex, parent)
+        if (this.tree[depth - 1].length === parentIndex) {
+          this.tree[depth - 1].push(parent)
+        } else if (this.tree[depth - 1].length > parentIndex) {
+          this.tree[depth - 1][parentIndex] = parent
+          // console.log('setting depth', depth - 1, parent)
+        } else {
+          console.log(this.tree[depth-1].length, parentIndex)
+          throw new Error('incosi')
+        }
+      }
+      return
+    }
+    // otherwise build the whole tree
     for (let depth = this.depth - 1; depth > 0; depth--) {
       this.tree[depth - 1] = this.calcParents(this.tree[depth], depth)
     }
   }
 
-  // where depth is between 0 and this.depth
+  // where depth is between 0 and this.depth - 1
   calcParents(children, depth) {
     const parents = []
     for (let x = 0 ; x < children.length; x++) {
@@ -66,7 +105,7 @@ class SparseTree {
         continue
       }
       const leftSibling = children[x]
-      const rightSibling = children.length > x + 1 ? children[x+1] : ''
+      const rightSibling = children.length <= x ? children[x+1] : this.zeroTree[depth]
       parents.push(this.hashFn(leftSibling, rightSibling))
     }
     return parents
