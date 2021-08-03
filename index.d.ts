@@ -1,4 +1,4 @@
-type HashFn<T> = (item: T, item2?: T) => T
+type HashFn<T> = (item: T, item2: T) => T
 type PreHashFn<T> = (hashFn: HashFn<T>, depth: number, childValue?: T) => T
 
 declare module 'simple-smt' {

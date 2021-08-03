@@ -3,9 +3,7 @@ const { sha512_256 } = require('js-sha512')
 const defaultHashFn = (item, item2) => {
   const hasher = sha512_256.create()
   hasher.update(item)
-  if (item2) {
-    hasher.update(item2)
-  }
+  hasher.update(item2)
   return hasher.hex()
 }
 
