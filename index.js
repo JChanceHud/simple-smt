@@ -9,10 +9,15 @@ const defaultHashFn = (item, item2) => {
   return hasher.hex()
 }
 
+const defaultPreHashFn = (hashFn, depth, childValue = '') => {
+  return hashFn(childValue, childValue)
+}
+
 class SparseTree {
-  constructor({ depth, hashFn, items }) {
+  constructor({ depth, hashFn, preHashFn, items }) {
     this.depth = depth
     this.hashFn = hashFn || defaultHashFn
+    this.preHashFn = preHashFn || defaultPreHashFn
     this.tree = Array(depth).fill().map(() => [])
     // indexed from top to bottom
     this.zeroTree = Array(depth).fill()
@@ -20,13 +25,10 @@ class SparseTree {
     for (let x = depth; x > 0; x--) {
       if (x === depth) {
         // start from base
-        this.zeroTree[x - 1] = this.hashFn('')
+        this.zeroTree[x - 1] = this.preHashFn(this.hashFn.bind(this), x - 1)
       } else {
         // otherwise generate the parent
-        this.zeroTree[x - 1] = this.hashFn(
-          this.zeroTree[x],
-          this.zeroTree[x]
-        )
+        this.zeroTree[x - 1] = this.preHashFn(this.hashFn.bind(this), x - 1, this.zeroTree[x])
       }
     }
     if (items) {
