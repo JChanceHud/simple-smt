@@ -71,3 +71,14 @@ test('should throw if invalid subtree appended', (t) => {
   }
   assert(false)
 })
+
+test('should test right subtree against left subtree', (t) => {
+  const tree = new SparseTree({ depth: 10, rightToLeft: true })
+  const entries = Array(2 ** 9).fill().map(() => 'test')
+  tree.appendMany(entries)
+  const subtree = tree.tree[5]
+  const testTree = new SparseTree({ depth: 6 })
+  testTree.appendMany(subtree)
+  assert.equal(testTree.root(), tree.root())
+  t.pass()
+})

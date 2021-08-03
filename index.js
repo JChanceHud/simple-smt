@@ -12,13 +12,14 @@ const defaultPreHashFn = (hashFn, depth, childValue = '') => {
 }
 
 class SparseTree {
-  constructor({ depth, hashFn, preHashFn, items }) {
+  constructor({ depth, hashFn, preHashFn, items, rightToLeft }) {
     this.depth = depth
     this.hashFn = hashFn || defaultHashFn
     this.preHashFn = preHashFn || defaultPreHashFn
     this.tree = Array(depth).fill().map(() => [])
     // indexed from top to bottom
     this.zeroTree = Array(depth).fill()
+    this.rightToLeft = rightToLeft || false
     // calculate zero entries
     for (let x = depth; x > 0; x--) {
       if (x === depth) {
@@ -41,12 +42,20 @@ class SparseTree {
   }
 
   appendMany(elements) {
-    this.tree[this.depth - 1].push(...elements)
+    if (this.rightToLeft) {
+      this.tree[this.depth - 1].unshift(...[...elements].reverse())
+    } else {
+      this.tree[this.depth - 1].push(...elements)
+    }
     this.buildTree()
   }
 
   append(element) {
-    this.tree[this.depth - 1].push(element)
+    if (this.rightToLeft) {
+      this.tree[this.depth - 1].unshift(element)
+    } else {
+      this.tree[this.depth - 1].push(element)
+    }
     this.buildTree(this.tree[this.depth - 1].length - 1)
   }
 
@@ -69,7 +78,7 @@ class SparseTree {
       this.tree[0] = [this.zeroTree[0]]
       return
     }
-    if (fromIndex !== undefined) {
+    if (fromIndex !== undefined && !this.rightToLeft) {
       // only rebuild a certain branch of the tree
       const startIndex = fromIndex % 2 === 0 ? fromIndex : fromIndex - 1
       for (let depth = this.depth - 1; depth > 0; depth--) {
@@ -101,6 +110,20 @@ class SparseTree {
   // where depth is between 0 and this.depth - 1
   calcParents(children, depth) {
     const parents = []
+    if (this.rightToLeft) {
+      for (let x = children.length - 1 ; x >= 0; x--) {
+        // process the current element
+        if (x % 2 === children.length % 2) {
+          // it's a left element, move to the next left sibling
+          continue
+        }
+        const rightSibling = children[x]
+        const leftSibling = x === 0 ? this.zeroTree[depth] : children[x-1]
+        parents.unshift(this.hashFn(rightSibling, leftSibling))
+      }
+      return parents
+    }
+    // otherwise go left to right
     for (let x = 0 ; x < children.length; x++) {
       // process the current element
       if (x % 2 === 1) {

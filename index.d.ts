@@ -10,7 +10,8 @@ declare module 'simple-smt' {
       depth: number,
       hashFn?: HashFn<T>,
       preHashFn?: PreHashFn<T>,
-      items?: T[]
+      items?: T[],
+      rightToLeft?: boolean
     })
     root(): T
     appendMany(items: T[]): void
